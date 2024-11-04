@@ -11,7 +11,7 @@ import matplotlib.gridspec as gridspec
 import pylab as pl
 from classes.PlanetNet_cnn import PlanetNet_cnn
 
-tf.logging.set_verbosity(tf.logging.INFO)
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
 ####################################################
 #NOTES

@@ -14,7 +14,7 @@ import tensorflow as tf
 
 
 
-tf.logging.set_verbosity(tf.logging.INFO)
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
 class PlanetNet_cnn(object):
     def __init__(self,Nx=10,Ny=10,Ns=256,Nlogit=7,learning_rate=0.001,dropout=0.4,model_type='spatial',model_path='./tmp',transfer_path=None,logs_path= './tmp'):
@@ -153,9 +153,9 @@ class PlanetNet_cnn(object):
             Nconv2 = self.Nconv2_1d
         
         
-        var_dict = {"{}_conv1_w".format(type): tf.Variable(tf.random_normal([Ksize1,Ksize2,1,Nconv1]),name='{}_conv1_w'.format(type)),
+        var_dict = {"{}_conv1_w".format(type): tf.Variable(tf.random.normal([Ksize1,Ksize2,1,Nconv1]),name='{}_conv1_w'.format(type)),
                     "{}_conv1_b".format(type): tf.Variable(tf.zeros([Nconv1]),name='{}_conv1_b'.format(type)),
-                    "{}_conv2_w".format(type): tf.Variable(tf.random_normal([Ksize1,Ksize2,Nconv1,Nconv2]),name='{}_conv2_w'.format(type)),
+                    "{}_conv2_w".format(type): tf.Variable(tf.random.normal([Ksize1,Ksize2,Nconv1,Nconv2]),name='{}_conv2_w'.format(type)),
                     "{}_conv2_b".format(type): tf.Variable(tf.zeros([Nconv2]),name='{}_conv2_b'.format(type))
                     }
         
@@ -183,7 +183,7 @@ class PlanetNet_cnn(object):
 #             activation=tf.nn.relu,
 #             name='spatial_conv1')
 
-        conv1_spatial = tf.nn.conv2d(input_layer, self.spatial_var_dict["spatial_conv1_w"],
+        conv1_spatial = tf.nn.conv2d(input_layer, filters=self.spatial_var_dict["spatial_conv1_w"],
                              strides=[1, 1, 1, 1], padding='SAME')
         relu1_spatial = tf.nn.relu(conv1_spatial + self.spatial_var_dict["spatial_conv1_b"])
         
@@ -203,7 +203,7 @@ class PlanetNet_cnn(object):
 #             activation=tf.nn.relu,
 #             name='spatial_conv2')
         
-        conv2_spatial = tf.nn.conv2d(pool1_spatial, self.spatial_var_dict["spatial_conv2_w"],
+        conv2_spatial = tf.nn.conv2d(pool1_spatial, filters=self.spatial_var_dict["spatial_conv2_w"],
                              strides=[1, 1, 1, 1], padding='SAME')
         relu2_spatial = tf.nn.relu(conv2_spatial + self.spatial_var_dict["spatial_conv2_b"])
     
@@ -241,7 +241,7 @@ class PlanetNet_cnn(object):
 #             activation=tf.nn.relu,
 #             name='spectral_conv1')
         
-        conv1_spectral = tf.nn.conv2d(input_layer, self.spectral_var_dict["spectral_conv1_w"],
+        conv1_spectral = tf.nn.conv2d(input_layer, filters=self.spectral_var_dict["spectral_conv1_w"],
                              strides=[1, 1, 1, 1], padding='SAME')
         relu1_spectral = tf.nn.relu(conv1_spectral + self.spectral_var_dict["spectral_conv1_b"])
             
@@ -263,7 +263,7 @@ class PlanetNet_cnn(object):
 #             activation=tf.nn.relu,
 #             name='spectral_conv2')
         
-        conv2_spectral = tf.nn.conv2d(pool1_spectral, self.spectral_var_dict["spectral_conv2_w"],
+        conv2_spectral = tf.nn.conv2d(pool1_spectral, filters=self.spectral_var_dict["spectral_conv2_w"],
                              strides=[1, 1, 1, 1], padding='SAME')
         relu2_spectral = tf.nn.relu(conv2_spectral + self.spectral_var_dict["spectral_conv2_b"])
     
@@ -337,14 +337,14 @@ class PlanetNet_cnn(object):
         
         
         # tf Graph input
-        x = tf.placeholder("float", [None, Ndata],name='data_in')
-        y = tf.placeholder("int32", [None, self.Nlogit],name='labels')
+        x = tf.compat.v1.placeholder("float", [None, Ndata],name='data_in')
+        y = tf.compat.v1.placeholder("int32", [None, self.Nlogit],name='labels')
     
         if run_test:
             [Nsamples_t, Ndata_t] = np.shape(test_data)
             # tf Graph test data input
-            x_t = tf.placeholder("float", [None, Ndata_t],name='test_data')
-            y_t = tf.placeholder("int32", [None, self.Nlogit],name='test_labels')
+            x_t = tf.compat.v1.placeholder("float", [None, Ndata_t],name='test_data')
+            y_t = tf.compat.v1.placeholder("int32", [None, self.Nlogit],name='test_labels')
             
     
         #network model
@@ -357,27 +357,27 @@ class PlanetNet_cnn(object):
         
         #defining loss function
         cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_))
+                tf.nn.softmax_cross_entropy_with_logits(labels=tf.stop_gradient(y), logits=y_))
         
         #defining optimiser
-        train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(cross_entropy)
+        train_step = tf.compat.v1.train.GradientDescentOptimizer(self.learning_rate).minimize(cross_entropy)
         
         #initialising saver 
-        saver_full = tf.train.Saver() #saves full model
+        saver_full = tf.compat.v1.train.Saver() #saves full model
         
         if self.model_type == 'spatial':
-            saver_part = tf.train.Saver(self.spatial_var_dict) #saves partial model 
+            saver_part = tf.compat.v1.train.Saver(self.spatial_var_dict) #saves partial model 
         elif self.model_type == 'spectral':    
-            saver_part = tf.train.Saver(self.spectral_var_dict)
+            saver_part = tf.compat.v1.train.Saver(self.spectral_var_dict)
 
         # Initializing the variables
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         
         #starting training session
         
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             # create log writer object
-            train_writer = tf.summary.FileWriter(self.logs_path,sess.graph)
+            train_writer = tf.compat.v1.summary.FileWriter(self.logs_path,sess.graph)
             
             sess.run(init) #initialise variables
             
@@ -473,17 +473,17 @@ class PlanetNet_cnn(object):
 #         print(np.shape(spec_data))
         
         # tf Graph input2
-        xm = tf.placeholder("float", [None, Nmap])  #map parameters
-        xs = tf.placeholder("float", [None, Nspec]) #spec parameters
-        y = tf.placeholder("int32", [None, self.Nlogit]) #labels
+        xm = tf.compat.v1.placeholder("float", [None, Nmap])  #map parameters
+        xs = tf.compat.v1.placeholder("float", [None, Nspec]) #spec parameters
+        y = tf.compat.v1.placeholder("int32", [None, self.Nlogit]) #labels
         
         # test data sets 
         if run_test:
             [Nsamples_t, Nmap_t] = np.shape(map_test)
             [Nsamples_t, Nspec_t]= np.shape(spec_test)
-            xm_t = tf.placeholder("float", [None, Nmap_t])  #map test parameters
-            xs_t = tf.placeholder("float", [None, Nspec_t]) #spec parameters
-            y_t = tf.placeholder("int32", [None, self.Nlogit]) #labels
+            xm_t = tf.compat.v1.placeholder("float", [None, Nmap_t])  #map test parameters
+            xs_t = tf.compat.v1.placeholder("float", [None, Nspec_t]) #spec parameters
+            y_t = tf.compat.v1.placeholder("int32", [None, self.Nlogit]) #labels
     
         #network model
         y_ = self.model(input_map=xm,input_spec=xs,train=True)
@@ -491,23 +491,23 @@ class PlanetNet_cnn(object):
         
         #defining loss function
         cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_))
+                tf.nn.softmax_cross_entropy_with_logits(labels=tf.stop_gradient(y), logits=y_))
         
         #defining optimiser
-        train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(cross_entropy)
+        train_step = tf.compat.v1.train.GradientDescentOptimizer(self.learning_rate).minimize(cross_entropy)
         
         #initialising saver 
-        saver_full = tf.train.Saver() #saves the full model
-        saver_spatial = tf.train.Saver(self.spatial_var_dict) #saves partial model     
-        saver_spectral = tf.train.Saver(self.spectral_var_dict)
+        saver_full = tf.compat.v1.train.Saver() #saves the full model
+        saver_spatial = tf.compat.v1.train.Saver(self.spatial_var_dict) #saves partial model     
+        saver_spectral = tf.compat.v1.train.Saver(self.spectral_var_dict)
         
         # Initializing the variables
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
 
         #starting training session
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             # create log writer object
-            train_writer = tf.summary.FileWriter(self.logs_path,sess.graph)
+            train_writer = tf.compat.v1.summary.FileWriter(self.logs_path,sess.graph)
             
             sess.run(init) #initialise variables
             
@@ -610,16 +610,16 @@ class PlanetNet_cnn(object):
         
         #setting up variables
         [Nsamples, Ndata] = np.shape(data)
-        x = tf.placeholder("float", [None, Ndata])
+        x = tf.compat.v1.placeholder("float", [None, Ndata])
         
         #defining model
         y_ = self.model(x)
         
         #initialising stuff
-        saver = tf.train.Saver()
-        init = tf.global_variables_initializer()
+        saver = tf.compat.v1.train.Saver()
+        init = tf.compat.v1.global_variables_initializer()
         
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             sess.run(init) #initialise variables
             
             #restoring model from saved 
@@ -642,17 +642,17 @@ class PlanetNet_cnn(object):
         #setting up variables
         [Nsamples, Nmap] = np.shape(map_data)
         [Nsamples, Nspec] = np.shape(spec_data)
-        xm = tf.placeholder("float", [None, Nmap])
-        xs = tf.placeholder("float", [None, Nspec])
+        xm = tf.compat.v1.placeholder("float", [None, Nmap])
+        xs = tf.compat.v1.placeholder("float", [None, Nspec])
         
         #defining model
         y_ = self.model(input_map=xm,input_spec=xs,train=False)
         
         #initialising stuff
-        saver = tf.train.Saver()
-        init = tf.global_variables_initializer()
+        saver = tf.compat.v1.train.Saver()
+        init = tf.compat.v1.global_variables_initializer()
         
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             sess.run(init) #initialise variables
             
             #restoring model from saved 
@@ -675,10 +675,10 @@ class PlanetNet_cnn(object):
         #function retrieving filters and plotting them and returning the arrays 
                 
         #initialising stuff
-        saver = tf.train.Saver()
-        init = tf.global_variables_initializer()
+        saver = tf.compat.v1.train.Saver()
+        init = tf.compat.v1.global_variables_initializer()
         
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             sess.run(init) #initialise variables
             
             #restoring model from saved 
@@ -799,4 +799,3 @@ class PlanetNet_cnn(object):
         onehot[np.arange(Ntrain), train_labels] = 1
         
         return onehot
-        
